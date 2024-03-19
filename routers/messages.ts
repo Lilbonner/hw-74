@@ -24,5 +24,25 @@ messageRouter.post('/', async (req, res) => {
   }
 });
 
+messageRouter.get('/', async (req, res) => {
+  try {
+    const files = await fs.readdir(messagesPath);
+    const sortedFiles = files
+      .filter(file => file.endsWith('.txt'))
+      .slice(0, 5);
 
+    const messages = await Promise.all(
+      sortedFiles.map(async file => {
+        const filePath = `${messagesPath}/${file}`;
+        const fileData = await fs.readFile(filePath, 'utf-8');
+        const { message, datetime } = JSON.parse(fileData);
+        return { message, datetime };
+      })
+    );
+
+    res.status(200).json(messages);
+  } catch (error) {
+    res.status(500).json({ error: 'Messages could not be read' });
+  }
+});
 export default messageRouter;
